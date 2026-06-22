@@ -1,0 +1,62 @@
+// Geometry set up /////////////////////////////////////////////////////////////////
+
+diameterD := 40e-9	// define diameter of the sphere in meters
+cellSize := 2e-9	// define side length of the cubic cells in meters
+
+SetGridsize(32, 32, 32)
+SetCellsize(cellSize, cellSize, cellSize)		// set cell size
+setgeom(ellipsoid(diameterD, diameterD, diameterD))	// apply spherical geometry 
+
+// End Geometry set up /////////////////////////////////////////////////////////////
+
+
+
+// Material parameters set up //////////////////////////////////////////////////////
+
+alpha = 1  		// damping constant in the LLG-equation of motion
+
+Ku1   = 4.8e4		// uniaxial anisotropy constant
+anisU = vector(0,0,1)   // uniaxial anisotropy direction
+
+Msat  = 1700e3		// saturation magnetization
+Aex   = 1e-11		// exchange constant
+
+Bmax  := 1.0		// maximum field value of the applied magnetic field in Tesla
+Bmin  := -1.0		// minimum field value of the applied magnetic field in Tesla
+Bstep :=  0.005		// step size of the applied magnetic field in Tesla
+TableAdd(B_ext)		// Add applied field to output table
+
+Temp = 0
+NoDemagSpins = 0	// switch off demagnetization field if == 1
+
+Xdirect := 0.0		// x-direction vector
+Ydirect := 0.0		// y-direction vector
+Zdirect := 1.0		// z-direction vector
+
+m=uniform(Xdirect, Ydirect, Zdirect)  // Initial magnetization
+
+i_count := 1
+// Upper Hysteresis Loop
+for B:=Bmax; B>=Bmin-Bstep; B-=Bstep{
+	B_ext = vector(Xdirect*B, Ydirect*B, Zdirect*B)
+	relax()
+	tablesave()   
+	FilenameFormat=sprintf("%%s%%06d")	
+	save(m)  
+	print("Schleife 1: B =", B, "\n")
+}
+	       
+		
+// Lower Hysteresis Loop	      
+for B:=Bmin; B<=Bmax+Bstep; B+=Bstep{
+	B_ext = vector(Xdirect*B, Ydirect*B, Zdirect*B)
+	relax()
+	tablesave()
+	FilenameFormat=sprintf("%%s%%06d")
+	save(m)
+	print("Schleife 2: B =", B, "\n")
+}
+
+
+
+
