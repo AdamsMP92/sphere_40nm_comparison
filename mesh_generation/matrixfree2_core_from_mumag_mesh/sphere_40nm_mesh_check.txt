@@ -1,0 +1,7 @@
+source mesh: /Users/michael/Desktop/current_projects/mammos/matrixfree2_mesh_with_tolerance_branch/simulation_run1_18June2026/simulation_1/mumag/mesh_generation/sphere20_air_shell.msh
+nodes: 1301
+tets: 6228
+tag 1 core tets: 6228
+min volume: 0.8316041432716847
+max volume: 13.970112460746465
+bad tets: 0

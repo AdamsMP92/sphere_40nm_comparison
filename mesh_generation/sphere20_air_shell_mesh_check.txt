@@ -1,0 +1,8 @@
+nodes: 16970
+tets: 98946
+tag 1 iron tets: 6298
+tag 2 air tets: 36187
+tag 3 shell tets: 56461
+min volume: 0.9938346883663521
+max volume: 392.89753111092733
+bad tets: 0

@@ -1,0 +1,125 @@
+{\rtf1\ansi\ansicpg1252
+{\fonttbl\f0\fswiss Helvetica;}
+\f0\fs24
+Mesh generation for the mammos-mumag 20 nm iron sphere simulation\par
+\par
+Overview\par
+This folder contains the files needed to reproduce the finite-element mesh used by the mammos-mumag simulation of a 20 nm radius iron sphere. The mesh has three volumetric regions: magnetic iron, non-magnetic air, and an outer spherical shell used by the mammos-mumag magnetostatic solver for the open-boundary transformation.\par
+\par
+Files in this folder\par
+prepare_sphere20_air_shell.py\par
+Python script that generates and post-processes the mesh.\par
+\par
+sphere20_air_shell.geo\par
+Gmsh geometry file defining the three spherical regions.\par
+\par
+sphere20_air_shell.unv\par
+Intermediate Gmsh mesh output in UNV format.\par
+\par
+sphere20_air_shell_raw.fly\par
+Intermediate FLY file produced by mammos_mumag.tofly.convert before post-processing.\par
+\par
+sphere20_air_shell_mesh_check.txt\par
+Text file containing the number of nodes, number of tetrahedra, tag counts, and volume checks for the final mesh.\par
+\par
+Final output\par
+The final mesh used by the simulation is written one directory above this folder:\par
+\par
+../sphere20_air_shell.fly\par
+\par
+This is the mesh file read by ../sphere20_mumag.py.\par
+\par
+Geometry definition\par
+The Gmsh file sphere20_air_shell.geo defines three concentric spherical regions in units of nanometers:\par
+\par
+r_iron = 20.0\par
+r_air = 60.0\par
+r_shell = 120.0\par
+\par
+The resulting regions are:\par
+tag 1: iron sphere, radius 0 nm to 20 nm\par
+tag 2: non-magnetic air region, radius 20 nm to 60 nm\par
+tag 3: outer spherical shell, radius 60 nm to 120 nm\par
+\par
+The air region represents the non-magnetic space around the particle. The outer shell is required by mammos-mumag for the spherical-shell transformation used to approximate the open boundary condition at infinity in the magnetostatic problem.\par
+\par
+Mesh-size settings\par
+The Gmsh file uses the following target mesh sizes:\par
+\par
+h_iron = 2.0 nm\par
+h_air = 5.0 nm\par
+h_shell = 10.0 nm\par
+\par
+The magnetic sphere is therefore meshed more finely than the surrounding air and shell regions.\par
+\par
+Step-by-step mesh generation\par
+Run the mesh-generation script from the parent mumag directory:\par
+\par
+python mesh_generation/prepare_sphere20_air_shell.py\par
+\par
+The script performs the following steps:\par
+\par
+1. Run Gmsh\par
+The script calls:\par
+\par
+gmsh -3 sphere20_air_shell.geo -format unv -o sphere20_air_shell.unv\par
+\par
+This creates the tetrahedral three-region mesh in UNV format.\par
+\par
+2. Convert UNV to FLY\par
+The script uses mammos_mumag.tofly.convert with exclude_list=[1, 2]. This converts only the 3D tetrahedral elements and ignores 1D and 2D elements:\par
+\par
+convert(unv, raw_fly, exclude_list=[1, 2])\par
+\par
+The intermediate output is:\par
+\par
+sphere20_air_shell_raw.fly\par
+\par
+3. Sanitize exponent notation\par
+The raw FLY file may contain Fortran-style D exponents, for example 1.0D-09. These are converted to E exponents, for example 1.0E-09, because esys-escript expects standard floating-point notation.\par
+\par
+The script also preserves the FLY header 3D-nodes. A naive replacement of all D characters would break this header, so the script only replaces D+ and D- in numerical values.\par
+\par
+4. Retag tetrahedra by centroid radius\par
+The UNV-to-FLY conversion does not always preserve the Gmsh physical-volume tags in the way required by mammos-mumag. Therefore the script retags all tetrahedra using the radius of their centroid:\par
+\par
+r <= 20 nm: tag 1, iron\par
+20 nm < r <= 60 nm: tag 2, air\par
+r > 60 nm: tag 3, outer shell\par
+\par
+This produces a deterministic tag structure matching the assumptions of the mammos-mumag magnetostatic solver.\par
+\par
+5. Write the final FLY mesh\par
+The final post-processed mesh is written to:\par
+\par
+../sphere20_air_shell.fly\par
+\par
+6. Write the mesh check file\par
+The script computes basic mesh statistics and writes them to:\par
+\par
+sphere20_air_shell_mesh_check.txt\par
+\par
+Archived mesh check\par
+For the mesh used in the archived simulation, the mesh check is:\par
+\par
+nodes: 16970\par
+tets: 98946\par
+tag 1 iron tets: 6298\par
+tag 2 air tets: 36187\par
+tag 3 shell tets: 56461\par
+min volume: 0.9938346883663521\par
+max volume: 392.89753111092733\par
+bad tets: 0\par
+\par
+Units\par
+The Gmsh geometry is defined in nanometers. In the mammos-mumag simulation, the parameter size = 1.0e-9 is used. Therefore one mesh coordinate unit corresponds to one nanometer in physical units.\par
+\par
+Software requirements\par
+The mesh-generation script requires:\par
+\par
+Gmsh\par
+mammos-mumag Python environment\par
+mammos_mumag.tofly converter\par
+\par
+In the project setup used for this simulation, these were available inside the mammos-mumag Pixi environment.\par
+}
