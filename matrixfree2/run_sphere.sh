@@ -3,7 +3,8 @@ set -euo pipefail
 
 export JAX_ENABLE_X64=True
 
-OUT_DIR="hyst_sphere_40nm_test"
+MESH_NAME="sphere_40nm_new"
+OUT_DIR="hyst_sphere_40nm_new"
 LOG_FILE="${OUT_DIR}/run.log"
 
 mkdir -p "${OUT_DIR}"
@@ -21,30 +22,32 @@ TOTAL_START=$(date +%s)
 {
   echo "Run started: $(date --iso-8601=seconds)"
   echo
-
-  # Mesh generation
-  MESH_START=$(date +%s)
-  echo "Mesh generation started: $(date --iso-8601=seconds)"
-
-  pixi run -e cuda python ../src/mesh.py \
-    --geom ellipsoid \
-    --extent 40,40,40 \
-    --h 2.0 \
-    --backend meshpy \
-    --out-name sphere_40nm
-
-  MESH_END=$(date +%s)
-  MESH_DURATION=$((MESH_END - MESH_START))
-
-  echo "Mesh generation finished: $(date --iso-8601=seconds)"
-  echo "Mesh generation runtime: $(format_duration "${MESH_DURATION}")"
+  echo "Using existing mesh: ${MESH_NAME}.npz"
   echo
 
-  # Hysteresis simulation
+  pixi run -e cuda python - <<PY
+import numpy as np
+z = np.load("${MESH_NAME}.npz")
+print("Mesh check:")
+print("  knt:", z["knt"].shape, z["knt"].dtype)
+print("  ijk:", z["ijk"].shape, z["ijk"].dtype)
+print("  tags:", np.unique(z["ijk"][:, -1], return_counts=True))
+PY
+
+  echo
+
+  pixi run -e cuda python - <<'PY'
+import jax
+print("JAX backend:", jax.default_backend())
+print("JAX devices:", jax.devices())
+PY
+
+  echo
+
   SIM_START=$(date +%s)
   echo "Simulation started: $(date --iso-8601=seconds)"
 
-  pixi run -e cuda python ../src/loop.py sphere_40nm \
+  pixi run -e cuda python ../src/loop.py "${MESH_NAME}" \
     --add-shell \
     --layers 4 \
     --out-dir "${OUT_DIR}" \
@@ -53,28 +56,14 @@ TOTAL_START=$(date +%s)
   SIM_END=$(date +%s)
   SIM_DURATION=$((SIM_END - SIM_START))
 
+  echo
   echo "Simulation finished: $(date --iso-8601=seconds)"
   echo "Simulation runtime: $(format_duration "${SIM_DURATION}")"
-  echo
-
-  # Plotting
-  PLOT_START=$(date +%s)
-  echo "Plotting started: $(date --iso-8601=seconds)"
-
-  pixi run -e cuda python ../src/plot_hysteresis.py \
-    "${OUT_DIR}/hysteresis.csv" \
-    "${OUT_DIR}/sphere_hyst.png"
-
-  PLOT_END=$(date +%s)
-  PLOT_DURATION=$((PLOT_END - PLOT_START))
-
-  echo "Plotting finished: $(date --iso-8601=seconds)"
-  echo "Plotting runtime: $(format_duration "${PLOT_DURATION}")"
-  echo
 
   TOTAL_END=$(date +%s)
   TOTAL_DURATION=$((TOTAL_END - TOTAL_START))
 
+  echo
   echo "Run finished: $(date --iso-8601=seconds)"
   echo "Total runtime: $(format_duration "${TOTAL_DURATION}")"
 } 2>&1 | tee "${LOG_FILE}"

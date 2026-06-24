@@ -10,7 +10,7 @@
 | dB | 0.002340517160671822 | .p2 |
 | eps_a | 1e-12 | .p2 |
 | h_dir | [0.0174524 0.        0.9998477] | .p2 |
-| loop | False | .p2 |
+| loop | True | .p2 |
 | lr | 0.1 | default |
 | max_iter | 2000 | default |
 | memory | 5 | default |
@@ -18,7 +18,7 @@
 | mfinal | -1.4043102964030931 | .p2 |
 | mstep | 0.004681034321343644 | .p2 |
 | mu | 0.9 | default |
-| out_dir | hyst_sphere_40nm_test | cli |
+| out_dir | hyst_sphere_40nm_new | cli |
 | pc_auto | True | default |
 | pc_force_alpha | 0.5 | default |
 | pc_force_eta | 0.5 | default |

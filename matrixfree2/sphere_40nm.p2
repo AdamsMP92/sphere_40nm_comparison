@@ -15,7 +15,7 @@ hfinal = -1.0
 hstep = 0.005
 mstep = 0.01
 mfinal = -3.0
-loop = false
+loop = true
 bias_type = circular
 bias_strength = 1.0e-5
 
